@@ -1,24 +1,18 @@
 import CodeSnippet from "@/components/CodeSnippet";
+import FinalDetailsScreen from "@/components/FinalDetailScreen";
 import Progressbar from "@/components/Progressbar";
 import RadioBox from "@/components/RadioBox";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 const Quiz = () => {
-  const code = `function mystery(x) {
-  x = x || 5;
-  console.log(x);
-}
-mystery(0);
-mystery(10);
-mystery();
-  `;
   const [questions, setQuestion] = useState(quizQuestions);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState(
     Array(quizQuestions.length).fill(null)
   );
-  console.log(answers);
+  const [done, setDone] = useState(false);
+  const lastStep = currentQuestion === questions.length - 1;
 
   const handleOptionChange = (index: number) => {
     const newAnswers = [...answers];
@@ -36,87 +30,104 @@ mystery();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (currentQuestion === questions.length - 1) {
+      setDone(true);
+    }
+
+    nextStep();
   };
 
   return (
     <div className="max-w-[60rem] mx-auto py-9">
-      <Progressbar
-        currentCount={currentQuestion + 1}
-        questionCount={questions.length}
-        width={((currentQuestion + 1) / questions.length) * 100 + "%"}
-      />
+      {done ? (
+        <div>
+          <FinalDetailsScreen />
+        </div>
+      ) : (
+        <>
+          <Progressbar
+            currentCount={currentQuestion + 1}
+            questionCount={questions.length}
+            width={((currentQuestion + 1) / questions.length) * 100 + "%"}
+          />
+          <form onSubmit={handleSubmit}>
+            <section className=" bg-gray-50 min-h-[20rem] rounded-md mt-[5rem] ">
+              <motion.div
+                key={currentQuestion}
+                initial={{ opacity: 0, filter: "blur(1px)" }}
+                animate={{ opacity: 1, filter: "none" }}
+                transition={{ duration: 0.8 }}
+                className="grid grid-cols-[1fr_auto] gap-x-[5rem] items-start  p-5"
+              >
+                <div>
+                  <h1 className="font-semibold text-lg mb-5">1. Question</h1>
+                  <p className="font-medium text-lg">
+                    {" "}
+                    {questions[currentQuestion].question}
+                  </p>
 
-      <section className=" bg-gray-50 min-h-[20rem] rounded-md mt-[5rem] ">
-        <motion.div
-          key={currentQuestion}
-          initial={{ opacity: 0, filter: "blur(1px)" }}
-          animate={{ opacity: 1, filter: "none" }}
-          transition={{ duration: 0.8 }}
-          className="grid grid-cols-[1fr_auto] gap-x-[5rem] items-start  p-5"
-        >
-          <div>
-            <h1 className="font-semibold text-lg mb-5">1. Question</h1>
-            <p className="font-medium text-lg">
-              {" "}
-              {questions[currentQuestion].question}
-            </p>
-
-            {questions[currentQuestion].codeSample && (
-              <div className="mt-6">
-                <CodeSnippet
-                  codeString={questions[currentQuestion].codeSample}
-                />
-              </div>
-            )}
-          </div>
-          <div className="w-[25rem] flex flex-col gap-y-3">
-            <h1 className="font-semibold text-lg mb-5">Answer</h1>
-
-            {questions[currentQuestion].options.map((option, i) => {
-              return (
-                <div key={i} className="flex items-center gap-x-2">
-                  <RadioBox
-                    id={`${i}`}
-                    name={questions[currentQuestion].question}
-                    checked={answers[currentQuestion] === i}
-                    onChange={() => handleOptionChange(i)}
-                  />
-                  <label className="font-medium text-gray-400">{option}</label>
+                  {questions[currentQuestion].codeSample && (
+                    <div className="mt-6">
+                      <CodeSnippet
+                        codeString={questions[currentQuestion].codeSample}
+                      />
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        </motion.div>
-      </section>
-      <div className="mt-8 flex items-center justify-end gap-x-6">
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={prevStep}
-          disabled={currentQuestion === 0}
-          className="px-5 bg-gray-200 py-2 disabled:opacity-40 rounded-full  hover:shadow-xl font-medium"
-        >
-          Prev
-        </motion.button>
+                <div className="w-[25rem] flex flex-col gap-y-3">
+                  <h1 className="font-semibold text-lg mb-5">Answer</h1>
 
-        {currentQuestion === questions.length - 1 ? (
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.04 }}
-            className="px-5 disabled:opacity-40 bg-green-900 hover:shadow-xl text-white py-2 font-medium rounded-full"
-          >
-            Submit
-          </motion.button>
-        ) : (
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={nextStep}
-            disabled={currentQuestion === questions.length - 1}
-            className="px-5 disabled:opacity-40 bg-gray-900 hover:shadow-xl text-white py-2 font-medium rounded-full"
-          >
-            Next
-          </motion.button>
-        )}
-      </div>
+                  {questions[currentQuestion].options.map((option, i) => {
+                    return (
+                      <div key={i} className="flex items-center gap-x-2">
+                        <RadioBox
+                          id={`${i}`}
+                          name={questions[currentQuestion].question}
+                          checked={answers[currentQuestion] === i}
+                          onChange={() => handleOptionChange(i)}
+                        />
+                        <label className="font-medium text-gray-400">
+                          {option}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </section>
+            <div className="mt-8 flex items-center justify-end gap-x-6">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.9 }}
+                onClick={prevStep}
+                disabled={currentQuestion === 0}
+                className="px-5 bg-gray-200 py-2 disabled:opacity-40 rounded-full  hover:shadow-xl font-medium"
+              >
+                Prev
+              </motion.button>
+
+              {lastStep ? (
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.04 }}
+                  className="px-5 disabled:opacity-40 bg-green-900 hover:shadow-xl text-white py-2 font-medium rounded-full"
+                >
+                  Submit
+                </motion.button>
+              ) : (
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  disabled={lastStep}
+                  className="px-5 disabled:opacity-40 bg-gray-900 hover:shadow-xl text-white py-2 font-medium rounded-full"
+                >
+                  Next
+                </motion.button>
+              )}
+            </div>
+          </form>
+        </>
+      )}
     </div>
   );
 };

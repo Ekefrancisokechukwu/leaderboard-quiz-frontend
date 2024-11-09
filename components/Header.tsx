@@ -4,9 +4,11 @@ import Link from "next/link";
 import google from "@/public/google.svg";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
-import { useRef, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { usePathname } from "next/navigation";
+import User from "./User";
+import { useUser } from "@/hooks/useUset";
 
 const quizzLinks = [
   {
@@ -32,10 +34,34 @@ const Header = () => {
   const dropdownRef = useRef(null);
   useClickOutside(dropdownRef, () => setIsOpen(false));
   const pathname = usePathname();
+  const user = useUser();
 
   const handlePathname = () => {
     const currentPath = quizzLinks.find((path) => pathname === path.href);
     return currentPath ? currentPath.href.replace(/^\//, "") : "Select Quizz";
+  };
+
+  const handleOAuthLogin = (e: FormEvent) => {
+    e.preventDefault(); // Prevent default navigation
+    const width = 500;
+    const height = 600;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+
+    // Open the new window with custom settings
+    const popup = window.open(
+      "http://localhost:5000/auth/google",
+      "OAuth Login",
+      `width=${width},height=${height},top=${top},left=${left},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+
+    // Optional: Polling to detect if the popup window is closed
+    const popupTimer = setInterval(() => {
+      if (popup && popup.closed) {
+        clearInterval(popupTimer);
+        console.log("Popup closed"); // Handle post-login here, e.g., check session
+      }
+    }, 500);
   };
 
   return (
@@ -79,13 +105,18 @@ const Header = () => {
           </div>
         </div>
       </div>
-      <Link
-        href={"http://localhost:5000/auth/google"}
-        className="flex items-center gap-x-2 py-1 px-3 hover:bg-gray-100 shadow rounded bg-gray-50"
-      >
-        <Image src={google} alt="google icon" className="size-[1rem]" />
-        Login
-      </Link>
+      {user.user ? (
+        <User />
+      ) : (
+        <Link
+          href={"http://localhost:5000/auth/google"}
+          onClick={handleOAuthLogin}
+          className="flex items-center gap-x-2 py-1 px-3 hover:bg-gray-100 shadow rounded bg-gray-50"
+        >
+          <Image src={google} alt="google icon" className="size-[1rem]" />
+          Login
+        </Link>
+      )}
     </header>
   );
 };
