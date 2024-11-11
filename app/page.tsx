@@ -1,6 +1,40 @@
+"use client";
+
 import GlobalLeaderboard from "@/components/GlobalLeaderboard";
+// import { useEffect } from "react";
+// import axios from "axios";
+// import { useRouter } from "next/navigation";
+// import { useUser } from "@/hooks/useUset";
 
 export default function Home() {
+  // const router = useRouter();
+  // const { setuser } = useUser();
+
+  // useEffect(() => {
+  //   const fetchUserData = async () => {
+  //     const token = localStorage.getItem("authToken");
+  //     if (!token) {
+  //       return;
+  //     }
+
+  //     try {
+  //       const response = await axios("http://localhost:5000/api/v1/auth/user", {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+  //       console.log(response);
+  //       setuser(response.data);
+  //     } catch (error) {
+  //       console.error("Error fetching user data:", error);
+  //       // Handle token invalid or expired
+  //       localStorage.removeItem("authToken");
+  //     }
+  //   };
+
+  //   fetchUserData();
+  // }, [router, setuser]);
+
   return (
     <div className="min-h-screen w-[50rem] mx-auto pt-[5rem]">
       <h1 className="text-center text-xl font-semibold">Leaderboards</h1>

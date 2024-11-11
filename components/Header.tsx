@@ -4,11 +4,12 @@ import Link from "next/link";
 import google from "@/public/google.svg";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
-import { FormEvent, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useClickOutside } from "@/hooks/useClickOutside";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import User from "./User";
 import { useUser } from "@/hooks/useUset";
+import axios from "axios";
 
 const quizzLinks = [
   {
@@ -34,34 +35,69 @@ const Header = () => {
   const dropdownRef = useRef(null);
   useClickOutside(dropdownRef, () => setIsOpen(false));
   const pathname = usePathname();
-  const user = useUser();
+  const router = useRouter();
+
+  const { user, setuser } = useUser();
 
   const handlePathname = () => {
     const currentPath = quizzLinks.find((path) => pathname === path.href);
     return currentPath ? currentPath.href.replace(/^\//, "") : "Select Quizz";
   };
 
-  const handleOAuthLogin = (e: FormEvent) => {
-    e.preventDefault(); // Prevent default navigation
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== "http://localhost:5000") return; // Ensure this matches your backend URL
+
+      if (event.data.type === "AUTH_SUCCESS") {
+        const token = event.data.token;
+        localStorage.setItem("authToken", token);
+        const fetchUserData = async () => {
+          if (!token) {
+            return;
+          }
+
+          try {
+            const response = await axios(
+              "http://localhost:5000/api/v1/auth/user",
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            setuser(response.data);
+          } catch (error) {
+            console.error("Error fetching user data:", error);
+            // Handle token invalid or expired
+          }
+        };
+        fetchUserData();
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [router, setuser]);
+
+  const handleGoogleLogin = () => {
+    // setIsLoading(true);
     const width = 500;
     const height = 600;
-    const left = (window.innerWidth - width) / 2;
-    const top = (window.innerHeight - height) / 2;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
 
-    // Open the new window with custom settings
     const popup = window.open(
-      "http://localhost:5000/auth/google",
-      "OAuth Login",
-      `width=${width},height=${height},top=${top},left=${left},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+      "http://localhost:5000/api/v1/auth/google",
+      "GoogleLogin",
+      `width=${width},height=${height},left=${left},top=${top}`
     );
 
-    // Optional: Polling to detect if the popup window is closed
-    const popupTimer = setInterval(() => {
-      if (popup && popup.closed) {
-        clearInterval(popupTimer);
-        console.log("Popup closed"); // Handle post-login here, e.g., check session
+    const checkPopup = setInterval(() => {
+      if (!popup || popup.closed) {
+        clearInterval(checkPopup);
+        // setIsLoading(false);
       }
-    }, 500);
+    }, 1000);
   };
 
   return (
@@ -105,17 +141,16 @@ const Header = () => {
           </div>
         </div>
       </div>
-      {user.user ? (
-        <User />
+      {user ? (
+        <User user={user} />
       ) : (
-        <Link
-          href={"http://localhost:5000/auth/google"}
-          onClick={handleOAuthLogin}
+        <button
+          onClick={handleGoogleLogin}
           className="flex items-center gap-x-2 py-1 px-3 hover:bg-gray-100 shadow rounded bg-gray-50"
         >
           <Image src={google} alt="google icon" className="size-[1rem]" />
           Login
-        </Link>
+        </button>
       )}
     </header>
   );
