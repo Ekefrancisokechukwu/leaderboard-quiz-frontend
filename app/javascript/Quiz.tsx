@@ -3,14 +3,21 @@ import FinalDetailsScreen from "@/components/FinalDetailScreen";
 import Progressbar from "@/components/Progressbar";
 import RadioBox from "@/components/RadioBox";
 import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const Quiz = () => {
+  const router = useRouter();
+  const searchParam = useSearchParams();
+  const currentURLQuestion = searchParam.get("question") || 0;
   const [questions, setQuestion] = useState(quizQuestions);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(
+    Number(currentURLQuestion)
+  );
   const [answers, setAnswers] = useState(
     Array(quizQuestions.length).fill(null)
   );
+
   const [done, setDone] = useState(false);
   const lastStep = currentQuestion === questions.length - 1;
 
@@ -22,10 +29,16 @@ const Quiz = () => {
 
   const nextStep = () => {
     setCurrentQuestion((prev) => Math.min(prev + 1, questions.length - 1));
+    router.push(
+      `?question=${currentQuestion + 2 >= 21 ? "done" : currentQuestion + 2}`
+    );
+
+    // console.log(currentQuestion + 2 >= 21);
   };
 
   const prevStep = () => {
     setCurrentQuestion((prev) => Math.max(prev - 1, 0));
+    router.push(`?question=${currentQuestion + 1}`);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -61,7 +74,9 @@ const Quiz = () => {
                 className="grid grid-cols-[1fr_auto] gap-x-[5rem] items-start  p-5"
               >
                 <div>
-                  <h1 className="font-semibold text-lg mb-5">1. Question</h1>
+                  <h1 className="font-semibold text-lg mb-5">
+                    {currentQuestion + 1}. Question
+                  </h1>
                   <p className="font-medium text-lg">
                     {" "}
                     {questions[currentQuestion].question}
@@ -87,7 +102,10 @@ const Quiz = () => {
                           checked={answers[currentQuestion] === i}
                           onChange={() => handleOptionChange(i)}
                         />
-                        <label className="font-medium text-gray-400">
+                        <label
+                          htmlFor={`${i}`}
+                          className="font-medium text-gray-400"
+                        >
                           {option}
                         </label>
                       </div>
