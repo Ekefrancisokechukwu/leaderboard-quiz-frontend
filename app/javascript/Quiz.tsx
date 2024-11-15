@@ -32,13 +32,11 @@ const Quiz = () => {
     router.push(
       `?question=${currentQuestion + 2 >= 21 ? "done" : currentQuestion + 2}`
     );
-
-    // console.log(currentQuestion + 2 >= 21);
   };
 
   const prevStep = () => {
     setCurrentQuestion((prev) => Math.max(prev - 1, 0));
-    router.push(`?question=${currentQuestion + 1}`);
+    router.push(`?question=${currentQuestion}`);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
