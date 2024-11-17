@@ -11,15 +11,38 @@ const Quiz = () => {
   const searchParam = useSearchParams();
   const currentURLQuestion = searchParam.get("question") || 0;
   const [questions, setQuestion] = useState(quizQuestions);
+  const [correctAns, setCorrectAns] = useState<number[]>([]);
+
   const [currentQuestion, setCurrentQuestion] = useState(
     Number(currentURLQuestion)
   );
+
   const [answers, setAnswers] = useState(
     Array(quizQuestions.length).fill(null)
   );
 
   const [done, setDone] = useState(false);
-  const lastStep = currentQuestion === questions.length - 1;
+  const lastStep = currentQuestion === quizQuestions.length - 1;
+
+  console.log(questions);
+
+  useEffect(() => {
+    if (currentQuestion > quizQuestions.length) {
+      setCurrentQuestion(quizQuestions.length - 1);
+      console.log("i was reached", questions.length, currentQuestion);
+    }
+  }, [currentQuestion, questions.length]);
+
+  useEffect(() => {
+    answers.forEach((ans, index) => {
+      if (
+        quizQuestions[index]?.options &&
+        quizQuestions[index]?.options[ans] === quizQuestions[index]?.answer
+      ) {
+        setCorrectAns((prev) => (prev.includes(ans) ? prev : [...prev, ans]));
+      }
+    });
+  }, [answers]);
 
   const handleOptionChange = (index: number) => {
     const newAnswers = [...answers];
@@ -32,6 +55,7 @@ const Quiz = () => {
     router.push(
       `?question=${currentQuestion + 2 >= 21 ? "done" : currentQuestion + 2}`
     );
+    console.log("i was clicked");
   };
 
   const prevStep = () => {
@@ -53,7 +77,10 @@ const Quiz = () => {
     <div className="max-w-[60rem] mx-auto py-9">
       {done ? (
         <div>
-          <FinalDetailsScreen />
+          <FinalDetailsScreen
+            passed={correctAns.length}
+            total={questions.length}
+          />
         </div>
       ) : (
         <>
@@ -77,13 +104,13 @@ const Quiz = () => {
                   </h1>
                   <p className="font-medium text-lg">
                     {" "}
-                    {questions[currentQuestion].question}
+                    {questions[currentQuestion]?.question}
                   </p>
 
-                  {questions[currentQuestion].codeSample && (
+                  {questions[currentQuestion]?.codeSample && (
                     <div className="mt-6">
                       <CodeSnippet
-                        codeString={questions[currentQuestion].codeSample}
+                        codeString={questions[currentQuestion]?.codeSample}
                       />
                     </div>
                   )}
@@ -91,12 +118,12 @@ const Quiz = () => {
                 <div className="w-[25rem] flex flex-col gap-y-3">
                   <h1 className="font-semibold text-lg mb-5">Answer</h1>
 
-                  {questions[currentQuestion].options.map((option, i) => {
+                  {questions[currentQuestion]?.options.map((option, i) => {
                     return (
                       <div key={i} className="flex items-center gap-x-2">
                         <RadioBox
                           id={`${i}`}
-                          name={questions[currentQuestion].question}
+                          name={questions[currentQuestion]?.question}
                           checked={answers[currentQuestion] === i}
                           onChange={() => handleOptionChange(i)}
                         />
@@ -163,8 +190,8 @@ const quizQuestions = [
 
   console.log(obj.a);
     `,
-    options: ["`1`", "`2`", "`3`", "`undefined`"],
-    answer: "`2`",
+    options: ["1", "2", "3", "undefined"],
+    answer: "2",
   },
   {
     question: "What is the purpose of the `let` keyword in JavaScript?",
@@ -176,194 +203,179 @@ const quizQuestions = [
     ],
     answer: "Declares a block-scoped variable that can be reassigned",
   },
-  {
-    question: "What will the following code output?",
-    codeSample: `
-const arr = [1, 2, 3];
-console.log(arr[3]);
-    `,
-    options: ["`undefined`", "`3`", "`null`", "Throws an error"],
-    answer: "`undefined`",
-  },
-  {
-    question:
-      "Which method would you use to add an element to the beginning of an array?",
-    options: ["`push`", "`pop`", "`unshift`", "`shift`"],
-    answer: "`unshift`",
-  },
-  {
-    question: "What does `NaN` represent in JavaScript?",
-    options: [
-      "Null and None",
-      "A non-numeric value",
-      "Not-a-Number",
-      "Not Applicable",
-    ],
-    answer: "Not-a-Number",
-  },
-  {
-    question: "What will the following code output?",
-    codeSample: `
-function foo() {
-  return
-  {
-    bar: "Hello"
-  };
-}
-console.log(foo());
-    `,
-    options: [
-      "`{ bar: 'Hello' }`",
-      "`undefined`",
-      "`Throws a syntax error`",
-      "`null`",
-    ],
-    answer: "`undefined`",
-  },
-  {
-    question: "What does `Array.prototype.map` return?",
-    options: [
-      "A new array with transformed elements",
-      "The original array",
-      "A single value",
-      "The first element that matches",
-    ],
-    answer: "A new array with transformed elements",
-  },
-  {
-    question: "What will the following code output?",
-    codeSample: `
-console.log([] + []);
-console.log([] + {});
-console.log({} + []);
-    `,
-    options: [
-      "`'' '' '[object Object]'`",
-      "`'0 0 0'`",
-      "`Throws a syntax error`",
-      "`'[object Object] [object Object] [object Object]'`",
-    ],
-    answer: "`'' '[object Object]' '[object Object]'`",
-  },
-  {
-    question: "What does the `const` keyword do in JavaScript?",
-    options: [
-      "Declares a block-scoped constant that cannot be reassigned",
-      "Declares a global constant",
-      "Declares a constant that can be reassigned",
-      "Declares a variable with no scope",
-    ],
-    answer: "Declares a block-scoped constant that cannot be reassigned",
-  },
-  {
-    question: "What will the following code output?",
-    codeSample: `
-const arr = [1, 2, 3];
-const result = arr.splice(1, 1);
-console.log(result);
-console.log(arr);
-    `,
-    options: [
-      "`[2], [1, 2, 3]`",
-      "`[2], [1, 3]`",
-      "`[1, 3], [2]`",
-      "`[3], [1, 2]`",
-    ],
-    answer: "`[2], [1, 3]`",
-  },
-  {
-    question:
-      "Which function is used to convert a JSON string into a JavaScript object?",
-    options: [
-      "`JSON.parse`",
-      "`JSON.stringify`",
-      "`JSON.toObject`",
-      "`Object.parse`",
-    ],
-    answer: "`JSON.parse`",
-  },
-  {
-    question: "What will the following code output?",
-    codeSample: `
-console.log('hello' || 'world');
-console.log(0 || 'hello');
-console.log(null || 42);
-console.log('' || 0);
-    `,
-    options: [
-      "`'hello', 'hello', 42, 0`",
-      "`'world', 'hello', 'hello', ''`",
-      "`'hello', 0, 42, ''`",
-      "`'world', 'world', 42, 0`",
-    ],
-    answer: "`'hello', 'hello', 42, 0`",
-  },
-  {
-    question:
-      "What is the value of `this` inside a regular function (not in strict mode)?",
-    options: [
-      "Global object (e.g., `window` in browsers)",
-      "The function itself",
-      "`undefined`",
-      "`null`",
-    ],
-    answer: "Global object (e.g., `window` in browsers)",
-  },
-  {
-    question: "What will the following code output?",
-    codeSample: `
-console.log(typeof [1, 2, 3]);
-    `,
-    options: ["`object`", "`array`", "`undefined`", "`number`"],
-    answer: "`object`",
-  },
-  {
-    question: "Which method can be used to merge multiple arrays into one?",
-    options: ["`concat`", "`merge`", "`append`", "`combine`"],
-    answer: "`concat`",
-  },
-  {
-    question: "What will the following code output?",
-    codeSample: `
-const arr = [1, 2, 3];
-console.log(arr.length);
-    `,
-    options: ["`3`", "`4`", "`0`", "Throws an error"],
-    answer: "`3`",
-  },
-  {
-    question:
-      "Which method removes the last element from an array and returns it?",
-    options: ["`pop`", "`push`", "`shift`", "`unshift`"],
-    answer: "`pop`",
-  },
-  {
-    question: "What will the following code output?",
-    codeSample: `
-let arr = [1, 2, 3];
-arr[10] = 99;
-console.log(arr.length);
-    `,
-    options: ["`11`", "`3`", "`10`", "Throws an error"],
-    answer: "`11`",
-  },
-  {
-    question: "What will the following code output?",
-    codeSample: `
-console.log(Boolean(0));
-    `,
-    options: ["`true`", "`false`", "`undefined`", "Throws an error"],
-    answer: "`false`",
-  },
-  {
-    question: "What will the following code output?",
-    codeSample: `
-let count = 0;
-console.log(count++);
-console.log(++count);
-console.log(count);
-    `,
-    options: ["`0, 2, 1`", "`1, 1, 1`", "`0, 2, 2`", "`1, 2, 2`"],
-    answer: "`0, 2, 2`",
-  },
+  //   {
+  //     question: "What will the following code output?",
+  //     codeSample: `
+  // const arr = [1, 2, 3];
+  // console.log(arr[3]);
+  //     `,
+  //     options: ["undefined", "3", "null", "Throws an error"],
+  //     answer: "undefined",
+  //   },
+  //   {
+  //     question:
+  //       "Which method would you use to add an element to the beginning of an array?",
+  //     options: ["push", "pop", "unshift", "shift"],
+  //     answer: "unshift",
+  //   },
+  //   {
+  //     question: "What does `NaN` represent in JavaScript?",
+  //     options: [
+  //       "Null and None",
+  //       "A non-numeric value",
+  //       "Not-a-Number",
+  //       "Not Applicable",
+  //     ],
+  //     answer: "Not-a-Number",
+  //   },
+  //   {
+  //     question: "What will the following code output?",
+  //     codeSample: `
+  // function foo() {
+  //   return
+  //   {
+  //     bar: "Hello"
+  //   };
+  // }
+  // console.log(foo());
+  //     `,
+  //     options: ["{ bar: 'Hello' }", "undefined", "Throws a syntax error", "null"],
+  //     answer: "undefined",
+  //   },
+  //   {
+  //     question: "What does `Array.prototype.map` return?",
+  //     options: [
+  //       "A new array with transformed elements",
+  //       "The original array",
+  //       "A single value",
+  //       "The first element that matches",
+  //     ],
+  //     answer: "A new array with transformed elements",
+  //   },
+  //   {
+  //     question: "What will the following code output?",
+  //     codeSample: `
+  // console.log([] + []);
+  // console.log([] + {});
+  // console.log({} + []);
+  //     `,
+  //     options: [
+  //       "'' '' '[object Object]'",
+  //       "'0 0 0'",
+  //       "Throws a syntax error",
+  //       "'[object Object] [object Object] [object Object]'",
+  //     ],
+  //     answer: "'' '[object Object]' '[object Object]'",
+  //   },
+  //   {
+  //     question: "What does the `const` keyword do in JavaScript?",
+  //     options: [
+  //       "Declares a block-scoped constant that cannot be reassigned",
+  //       "Declares a global constant",
+  //       "Declares a constant that can be reassigned",
+  //       "Declares a variable with no scope",
+  //     ],
+  //     answer: "Declares a block-scoped constant that cannot be reassigned",
+  //   },
+  //   {
+  //     question: "What will the following code output?",
+  //     codeSample: `
+  // const arr = [1, 2, 3];
+  // const result = arr.splice(1, 1);
+  // console.log(result);
+  // console.log(arr);
+  //     `,
+  //     options: ["[2], [1, 2, 3]", "[2], [1, 3]", "[1, 3], [2]", "[3], [1, 2]"],
+  //     answer: "[2], [1, 3]",
+  //   },
+  //   {
+  //     question:
+  //       "Which function is used to convert a JSON string into a JavaScript object?",
+  //     options: ["JSON.parse", "JSON.stringify", "JSON.toObject", "Object.parse"],
+  //     answer: "JSON.parse",
+  //   },
+  //   {
+  //     question: "What will the following code output?",
+  //     codeSample: `
+  // console.log('hello' || 'world');
+  // console.log(0 || 'hello');
+  // console.log(null || 42);
+  // console.log('' || 0);
+  //     `,
+  //     options: [
+  //       "'hello', 'hello', 42, 0",
+  //       "'world', 'hello', 'hello', ''",
+  //       "'hello', 0, 42, ''",
+  //       "'world', 'world', 42, 0",
+  //     ],
+  //     answer: "'hello', 'hello', 42, 0",
+  //   },
+  //   {
+  //     question:
+  //       "What is the value of `this` inside a regular function (not in strict mode)?",
+  //     options: [
+  //       "Global object (e.g., `window` in browsers)",
+  //       "The function itself",
+  //       "`undefined`",
+  //       "`null`",
+  //     ],
+  //     answer: "Global object (e.g., `window` in browsers)",
+  //   },
+  //   {
+  //     question: "What will the following code output?",
+  //     codeSample: `
+  // console.log(typeof [1, 2, 3]);
+  //     `,
+  //     options: ["object", "array", "undefined", "number"],
+  //     answer: "object",
+  //   },
+  //   {
+  //     question: "Which method can be used to merge multiple arrays into one?",
+  //     options: ["concat", "merge", "append", "combine"],
+  //     answer: "concat",
+  //   },
+  //   {
+  //     question: "What will the following code output?",
+  //     codeSample: `
+  // const arr = [1, 2, 3];
+  // console.log(arr.length);
+  //     `,
+  //     options: ["3", "4", "0", "Throws an error"],
+  //     answer: "3",
+  //   },
+  //   {
+  //     question:
+  //       "Which method removes the last element from an array and returns it?",
+  //     options: ["pop", "push", "shift", "unshift"],
+  //     answer: "pop",
+  //   },
+  //   {
+  //     question: "What will the following code output?",
+  //     codeSample: `
+  // let arr = [1, 2, 3];
+  // arr[10] = 99;
+  // console.log(arr.length);
+  //     `,
+  //     options: ["11", "3", "10", "Throws an error"],
+  //     answer: "11",
+  //   },
+  //   {
+  //     question: "What will the following code output?",
+  //     codeSample: `
+  // console.log(Boolean(0));
+  //     `,
+  //     options: ["true", "false", "undefined", "Throws an error"],
+  //     answer: "false",
+  //   },
+  //   {
+  //     question: "What will the following code output?",
+  //     codeSample: `
+  // let count = 0;
+  // console.log(count++);
+  // console.log(++count);
+  // console.log(count);
+  //     `,
+  //     options: ["0, 2, 1", "1, 1, 1", "0, 2, 2", "1, 2, 2"],
+  //     answer: "0, 2, 2",
+  //   },
 ];

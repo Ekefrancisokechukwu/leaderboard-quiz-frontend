@@ -5,12 +5,15 @@ import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { CheckCircle, XCircle } from "lucide-react";
 
+interface FinalDetailsScreenProps {
+  total: number;
+  passed: number;
+}
+
 export default function FinalDetailsScreen({
-  score = 8,
-  total = 10,
-  passed = 8,
-  failed = 2,
-}) {
+  total,
+  passed,
+}: FinalDetailsScreenProps) {
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
@@ -24,9 +27,10 @@ export default function FinalDetailsScreen({
   }, [showConfetti]);
 
   useEffect(() => {
+    if (passed !== total) return;
     const timer = setTimeout(() => setShowConfetti(true), 500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [passed, total]);
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4">
@@ -50,7 +54,7 @@ export default function FinalDetailsScreen({
           transition={{ delay: 0.4, duration: 0.5 }}
           className="text-6xl font-bold text-purple-600 mb-6"
         >
-          {score}/{total}
+          {passed}/{total}
         </motion.div>
         <div className="flex justify-center space-x-8 mb-8">
           <motion.div
@@ -73,7 +77,7 @@ export default function FinalDetailsScreen({
           >
             <XCircle className="w-12 h-12 text-red-500 mb-2" />
             <span className="text-2xl font-semibold text-gray-700">
-              {failed}
+              {total - passed}
             </span>
             <span className="text-sm text-gray-500">Failed</span>
           </motion.div>
